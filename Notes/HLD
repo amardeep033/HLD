@@ -1,0 +1,84 @@
+Blue-green deployment is a deployment strategy used to release new versions of software with zero downtime and minimal risk.
+🔵 Blue Environment (Current Live): This is the version of your application currently serving production traffic.
+🟢 Green Environment (New Version): You deploy the new version of your application here - and do the testing.
+Once you're confident it works, update the load balancer / router to send all production traffic to Green.
+Blue Becomes Idle (Rollback Option)
+If everything works: Blue is now idle and can be updated next time.
+If something breaks: instantly switch back to Blue → fast rollback.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Conditional hashing is a concept where you compute a hash only if certain conditions are met, or compute different hashes based on different conditions.
+Real-World Use Cases
+✔ Deduplication systems: Hash file only if size > X MB (to avoid overhead).
+✔ Authentication systems: Hash only after checking password complexity rules or version.
+✔ Distributed systems:Use a different hash function based on: Key type, Version and Partitioning scheme
+Why Conditional Hashing Exists
+- Improve performance: Reduce unnecessary hashing
+- Support variable data formats
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+RabbitMQ is a message broker — software that helps different services/applications communicate with each other asynchronously, reliably, and at scale. - Decouple microservices
+Producer sends message → Exchange
+Exchange decides based on routing rules → Queue
+Consumer pulls the message from the queue
+Consumer acknowledges after processing - Messages aren’t lost if a consumer crashes.
+RabbitMQ removes message from queue
+Common use cases: Payment processing queues, Notification systems (SMS, email), Fraud detection pipelines, Order/event workflows, Logging pipelines
+
+Kafka (Event Streaming Platform)- store events immutably and replay anytime.
+Behaves like a distributed commit log: High throughput, partitioning, consumer groups.
+Consumers track their own offsets: Ideal when you need streams, analytics, audits, event sourcing, high-scale pipelines.
+
+If your system is about tasks/jobs → choose RabbitMQ.
+If your system is about events/data streams → choose Kafka.
+If you need high throughput + replay + durability → Kafka.
+If you need routing + flexible exchange patterns → RabbitMQ.
+
+“Do this task once and remove it.” vs “Record all events so multiple systems can read them anytime, even replay history.”
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DLQ: Orch issues a command → Exec executes it, but exec may panic / lose connectivity and fail to report completion to orch → DB stays stale and the system thinks the command didn’t finish.
+
+Make actions idempotent (no re-executions).
+Persist intent and results durably (so a crash doesn’t lose them).
+Use explicit delivery & acknowledgement (don’t rely on best-effort RPC(Http req)).
+Reconcile periodically (a sweeper to fix missed updates) ---- Re-checks evidence of completion (logs, executor heartbeat, idempotency store).
+Observability & correlation (trace every command with a unique id).
+
+When Exec can’t call Orch update API, Exec should retry (with exponential backoff) and then push the update into a durable fallback (local disk, persistent queue, or DLQ). If retries fail permanently, put into a Dead Letter Queue and alert the ops team.
+For status updates, publish to a dedicated status topic or queue rather than directly calling Orch API—Orch subscribes to this topic and updates DB.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-> CDN (Content Delivery Network) is a globally distributed network of servers that delivers content (images, videos, scripts, APIs, files) fast, reliably, and close to users.
+A network of geographically spread-out “mini-copies” of your website or content that users load from the closest location.
+When a user requests a resource: User hits the nearest CDN edge server (not your origin server). If content exists in cache → served instantly.
+If not → CDN pulls it from your origin server, caches it, then serves it. Future users get it instantly from cache.
+🏢 Common CDNs Used in Industry: Cloudflare, Akamai
+
+-> Proxy: A server that sits between the client and the internet. It forwards your requests for you.
+Uses: Hide your IP, Bypass geo-restrictions and Filter/block websites (corporate/college proxy)
+
+-> Load Bal: A load balancer is a component that distributes incoming traffic across multiple backend servers to prevent overload and ensure high availability.
+What it does: Spreads requests evenly across servers, Removes unhealthy servers from rotation, Ensures zero downtime during deploys (blue-green, rolling), Helps your app scale horizontally
+NGINX / HAProxy
+
+-> Gateway: An API Gateway is a smart, centralized entry point for all API traffic that adds security, routing, rate-limiting, and transformations before requests reach your microservices.
+What it does: Authentication (JWT, OAuth), Rate limiting / throttling, Request/response transformation, Routing to multiple internal services
+NGINX as gateway
+
+-> VPN: A VPN creates an encrypted, private tunnel between your device and a VPN server, so all your internet traffic is secure and your IP is hidden.
+NordVPN
+
+Remove CDN: Backend gets overloaded serving images/files; global users face high latency.
+Remove LB: Only one server gets traffic; no horizontal scaling; single point of failure.
+Remove Gateway: Each microservice must handle auth, rate limits, CORS, logging → messy architecture.
+Remove VPN: Internal systems become exposed; security risk.
+Remove Proxy: Usually no issue unless you rely on it for filtering / routing.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
