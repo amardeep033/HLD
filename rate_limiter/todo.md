@@ -1,0 +1,10 @@
+- capacity estimation is missing everywhere
+- much deeper db design like indexing, consistency, partitioning, replication, backup, recovery, etc.
+- concurrency control - atomic increments and race conditions when multiple requests hit the same counter -- redis INCR
+- failure modes - what if Redis is down? Do we fail open (allow all) or fail closed (block all)? How do we alert and recover?
+- observability - how do we monitor the rate limiter's performance and correctness? What metrics and logs do we collect?
+- lua scripting in Redis for atomic multi-step operations (check + increment) to avoid race
+- IP spoofing via X-Forwarded-For header - need to trust only certain proxies or use a more secure identifier
+- Hot key handling in detailed design - what if a single user or API endpoint gets a huge spike in traffic? Do we shard by userId or apiId? How do we handle hot keys that exceed capacity of a single Redis node?
+- Multi-region consistency 
+- redis lua script implementation in code

@@ -1,0 +1,8 @@
+# OS files
+.DS_Store
+
+# Editor settings
+.vscode/
+
+# Rust build artifacts
+rate_limiter/rust/target/
