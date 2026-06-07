@@ -1,0 +1,78 @@
+services:
+  # PostgreSQL is a third-party service, so Compose pulls a ready-made image from Docker Hub
+  # instead of building one from the local Dockerfile.
+  db:
+    image: postgres:16
+    container_name: payments-db
+    environment:
+      # These variables are read by the Postgres image on first startup to
+      # create the initial user, password, and database.
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: test
+    volumes:
+      # Named volume keeps database files alive across container restarts.
+      - pgdata:/var/lib/postgresql/data
+      # Bind mount seeds the database using SQL/scripts placed on the host.
+      - ./db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      # Compose waits for this check before starting dependent services that
+      # require a ready database connection.
+      test: ["CMD-SHELL", "pg_isready -U myuser -d test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Jaeger receives OpenTelemetry traces so you can inspect request flow.
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    container_name: jaeger
+    ports:
+      # 16686 exposes the Jaeger UI in the browser.
+      - "16686:16686"
+      # 4317 is the OTLP gRPC endpoint the app sends traces to.
+      - "4317:4317"
+
+  # Simple echo server to inspect webhook payloads during local development.
+  webhook-listener:
+    image: mendhak/http-https-echo
+    container_name: webhook-listener
+
+  # This service is your own application, so Compose builds an image from the
+  # Dockerfile in the current directory.
+  app:
+    build: .
+    container_name: transaction-service
+    depends_on:
+      db:
+        # Unlike plain startup ordering, this waits until the DB healthcheck
+        # reports healthy.
+        condition: service_healthy
+      jaeger:
+        # Jaeger only needs to be started; there is no healthcheck here.
+        condition: service_started
+    ports:
+      # Maps host port 8080 to container port 8080.
+      - "8080:8080"
+    environment:
+      # Inside the Compose network, services reach each other by service name.
+      # So the hostname is `db`, not localhost.
+      DATABASE_URL: postgres://myuser:mypassword@db:5432/test
+      # 0.0.0.0 is required so the process listens on the container network,
+      # not just loopback inside the container.
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+      LOG_LEVEL: info
+      SERVICE_NAME: transaction-service
+      # The app exports traces to Jaeger over the internal Compose network.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      # Application-specific tuning knobs passed in as environment variables.
+      WEBHOOK_BATCH_SIZE: 20
+      WEBHOOK_MAX_RETRIES: 5
+      WEBHOOK_PROCESSING_TIMEOUT_SECS: 120
+      RUST_BACKTRACE: full
+      RUST_LOG: debug
+
+volumes:
+  # Named volumes are created and managed by Docker, separate from source code.
+  pgdata:

@@ -1,0 +1,87 @@
+# .github/workflows/ci-cd.yml
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+
+  # ── Stage 1: Build & Test ──────────────────────────────────────────────────
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release
+
+  # ── Stage 2: Package (only on main, not on PRs) ───────────────────────────
+  package:
+    needs: build-and-test          # only runs if tests passed
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag image with commit SHA
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: type=sha   # → myapp:sha-a3f9c12
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+  # ── Stage 3: Deploy to staging ────────────────────────────────────────────
+  deploy-staging:
+    needs: package
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy
+        run: |
+          kubectl set image deployment/myapp myapp=${{ needs.package.outputs.image-tag }}
+          kubectl rollout status deployment/myapp
+
+  # ── Stage 4: Deploy to production (manual approval gate) ──────────────────
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production        # requires manual approval in GitHub UI
+    steps:
+      - name: Deploy
+        run: |
+          kubectl set image deployment/myapp myapp=${{ needs.package.outputs.image-tag }}
+          kubectl rollout status deployment/myapp --timeout=5m
