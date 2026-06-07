@@ -5,4 +5,4 @@
 .vscode/
 
 # Rust build artifacts
-rate_limiter/rust/target/
+**/rust/target/
