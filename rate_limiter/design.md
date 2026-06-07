@@ -1,6 +1,6 @@
 # Rate Limiter — Complete Request Trace
 
-> Interview answer for: _"Trace a request through a scaled, layered rate limiter."_
+> discussion answer for: _"Trace a request through a scaled, layered rate limiter."_
 
 ---
 

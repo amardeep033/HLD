@@ -6,7 +6,7 @@
 
 - Usually server-side
 - Protects backend services
-- Most common interview scenario
+- Most common discussion scenario
 - Flow: Client -> API Gateway / Middleware -> Services
 
 ### 1.1.2 Internal Microservice Rate Limiter
@@ -252,7 +252,7 @@ Request → nearest regional limiter/local cache → sharded distributed Redis/g
 
 ---
 
-## 4.1 Strong Interview-Level Answer
+## 4.1 Strong discussion-Level Answer
 
 ### 4.1.1 If accuracy matters
 
@@ -432,7 +432,7 @@ Too expensive at high RPS.
 
 ## 9.1 What happens if every request hits Redis?
 
-Excellent interviewer follow-up.
+Excellent discussioner follow-up.
 
 At 1M+ RPS:
 
@@ -676,4 +676,198 @@ Features:
 
 ---
 
-refer 'https://bytebytego.com/courses/system-design-interview/design-a-rate-limiter'
+# 15. Throttling
+
+## 15.1 Rate Limiting vs Throttling
+
+Often used interchangeably, but there is a subtle distinction:
+
+| Aspect          | Rate Limiting                          | Throttling                                     |
+| --------------- | -------------------------------------- | ---------------------------------------------- |
+| Action on excess| Reject request (429)                   | Slow down / delay request                      |
+| Goal            | Hard cap on request count              | Smooth traffic flow                            |
+| User experience | Client gets error, must retry          | Client gets delayed response                   |
+| Use case        | Protecting backend from overload       | Controlling outgoing rate to downstream system |
+
+---
+
+## 15.2 Types of Throttling
+
+### 15.2.1 Hard Throttling
+
+Requests exceeding the limit are rejected outright.
+
+Same behavior as rate limiting — returns 429 Too Many Requests.
+
+---
+
+### 15.2.2 Soft Throttling
+
+Allow a small percentage of excess requests beyond the limit.
+
+Example:
+
+Limit: 100 req/min
+Allow up to 110 req/min (10% buffer)
+
+Useful when occasional bursts are acceptable.
+
+---
+
+### 15.2.3 Elastic / Dynamic Throttling
+
+Adjust the limit dynamically based on available system resources.
+
+Example:
+
+If CPU < 60%: allow 200 req/sec
+If CPU > 80%: reduce to 100 req/sec
+If CPU > 95%: reduce to 50 req/sec
+
+Strong answer for adaptive systems.
+
+---
+
+## 15.3 Throttling Strategies
+
+### 15.3.1 Delay-Based Throttling
+
+Instead of rejecting, add artificial delay to slow the client down.
+
+Example flow:
+
+Request arrives → exceeds rate → server sleeps 500ms → sends response
+
+Pros:
+- client does not need to retry
+- smoother experience
+
+Cons:
+- ties up server threads/connections
+- can cause cascading slowdowns under high load
+
+---
+
+### 15.3.2 Queue-Based Throttling (Leaky Bucket)
+
+Excess requests are queued instead of rejected.
+
+Processed at a fixed outgoing rate.
+
+Example:
+
+Requests arrive at 500 req/sec
+Queue drains at 100 req/sec
+Oldest requests processed first
+Queue overflow → drop/reject
+
+Pros:
+- smooth downstream traffic
+- protects dependent services
+
+Cons:
+- adds latency
+- queue can grow under sustained overload
+
+---
+
+### 15.3.3 Backpressure Throttling
+
+Upstream service signals downstream caller to slow down.
+
+Example:
+
+Service B is overloaded → responds with Retry-After header
+Service A reduces call rate accordingly
+
+Common in streaming systems and microservice meshes.
+
+---
+
+## 15.4 Throttling in Distributed Systems
+
+### 15.4.1 Client-Side Throttling
+
+Caller tracks its own request rate and self-limits before hitting the server.
+
+Used in:
+- SDKs
+- gRPC client interceptors
+- AWS SDK retry/backoff logic
+
+Pros:
+- reduces wasted requests
+- better resource utilization
+
+Cons:
+- relies on client cooperation
+
+---
+
+### 15.4.2 Server-Side Throttling
+
+Server enforces limits regardless of client behavior.
+
+Authoritative and cannot be bypassed.
+
+---
+
+### 15.4.3 Adaptive Client Throttling (Google Approach)
+
+Client tracks:
+- total requests sent
+- total accepted responses
+
+Computes local rejection probability:
+
+```
+max(0, (requests - K * accepts) / (requests + 1))
+```
+
+Where K is a multiplier (typically 2).
+
+Client probabilistically drops requests locally before sending.
+
+Reduces load on server during throttling events without explicit server signaling.
+
+---
+
+## 15.5 Response Headers for Throttling
+
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 10
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1749300000
+```
+
+`Retry-After` tells the client how many seconds to wait before retrying.
+
+---
+
+## 15.6 Algorithm Choice for Throttling
+
+| Goal                          | Recommended Algorithm     |
+| ----------------------------- | ------------------------- |
+| Smooth outgoing traffic       | Leaky Bucket              |
+| Allow controlled bursts       | Token Bucket              |
+| Delay instead of reject       | Queue + Leaky Bucket      |
+| Adaptive based on system load | Dynamic Token Bucket      |
+| Simple hard cap               | Fixed / Sliding Window    |
+
+---
+
+## 15.7 Throttling vs Circuit Breaker
+
+Throttling and circuit breakers are complementary patterns:
+
+| Pattern         | Trigger                        | Action                         |
+| --------------- | ------------------------------ | ------------------------------ |
+| Throttling      | Request rate exceeds threshold | Slow down or delay requests    |
+| Circuit Breaker | Downstream failure detected    | Stop sending requests entirely |
+
+Strong production systems use both together.
+
+---
+refer 'https://bytebytego.com/courses/system-design-discussion/design-a-rate-limiter'
