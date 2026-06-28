@@ -1,0 +1,36 @@
+  [2m2026-06-21T11:53:45.654230Z[0m [32m INFO[0m [1;32mobsv::handler[0m[32m: [32mrequest received[0m
+    [2;3mat[0m src/handler.rs:34
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 3469fa9a-083e-42f7-83e3-f82c52c4920d, [1mendpoint[0m: "/test"
+
+  [2m2026-06-21T11:53:45.654546Z[0m [32m INFO[0m [1;32mobsv::handler[0m[32m: [32mbusiness logic completed, [1;32mvalue[0m[32m: 9, [1;32maccepted[0m[32m: true[0m
+    [2;3mat[0m src/handler.rs:60
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 3469fa9a-083e-42f7-83e3-f82c52c4920d, [1mendpoint[0m: "/test"
+
+  [2m2026-06-21T11:53:45.654731Z[0m [32m INFO[0m [1;32mobsv::handler[0m[32m: [32mrequest completed, [1;32mstatus[0m[32m: 200[0m
+    [2;3mat[0m src/handler.rs:70
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 3469fa9a-083e-42f7-83e3-f82c52c4920d, [1mendpoint[0m: "/test"
+
+  [2m2026-06-21T11:56:02.493807Z[0m [32m INFO[0m [1;32mobsv::handler[0m[32m: [32mrequest received[0m
+    [2;3mat[0m src/handler.rs:34
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 24a2d82d-5cea-4c6a-b5d4-c18695cb2f65, [1mendpoint[0m: "/test"
+
+  [2m2026-06-21T11:56:02.493940Z[0m [33m WARN[0m [1;33mobsv::handler[0m[33m: [33mbusiness logic completed, [1;33mvalue[0m[33m: 10, [1;33maccepted[0m[33m: false[0m
+    [2;3mat[0m src/handler.rs:62
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 24a2d82d-5cea-4c6a-b5d4-c18695cb2f65, [1mendpoint[0m: "/test"
+
+  [2m2026-06-21T11:56:02.493996Z[0m [32m INFO[0m [1;32mobsv::handler[0m[32m: [32mrequest completed, [1;32mstatus[0m[32m: 422[0m
+    [2;3mat[0m src/handler.rs:76
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 24a2d82d-5cea-4c6a-b5d4-c18695cb2f65, [1mendpoint[0m: "/test"
+
+  [2m2026-06-21T11:56:07.473078Z[0m [32m INFO[0m [1;32mobsv::handler[0m[32m: [32mrequest received[0m
+    [2;3mat[0m src/handler.rs:34
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 6c27ec5b-eed8-4e75-98ad-3f023f11ffc2, [1mendpoint[0m: "/test"
+
+  [2m2026-06-21T11:56:07.473168Z[0m [33m WARN[0m [1;33mobsv::handler[0m[33m: [33mvalidation failed, [1;33mvalue[0m[33m: 11[0m
+    [2;3mat[0m src/handler.rs:45
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 6c27ec5b-eed8-4e75-98ad-3f023f11ffc2, [1mendpoint[0m: "/test"
+
+  [2m2026-06-21T11:56:07.473196Z[0m [32m INFO[0m [1;32mobsv::handler[0m[32m: [32mrequest completed, [1;32mstatus[0m[32m: 400[0m
+    [2;3mat[0m src/handler.rs:46
+    [2;3min[0m obsv::handler::[1mhttp_request[0m [2;3mwith[0m [1mrequest_id[0m: 6c27ec5b-eed8-4e75-98ad-3f023f11ffc2, [1mendpoint[0m: "/test"
+

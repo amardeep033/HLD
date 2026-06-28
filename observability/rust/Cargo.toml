@@ -1,0 +1,13 @@
+[package]
+name = "obsv"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-web = "4"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "registry"] }
+prometheus = "0.13"
+uuid = { version = "1", features = ["v4"] }
