@@ -1,0 +1,35 @@
+async
+sync
+
+blocking
+non blocking
+
+---------------------------
+
+msg queue vs stream vs batch
+
+event driven vs request driven
+
+msg queue .... dlq
+
+event sourcing
+
+bff, saga, cqrs, pub sub
+
+---------------------
+
+otel
+caching, redis, 
+rate limiter, circuit breaker, 
+proxy, cdn, load balancing, api gateway
+cookies
+pollling vs webhooks
+
+-----------------------
+
+when we put sms, email and other non critical things to queue is it consumed in linear order?
+i mean about read and not write.. are reads in order?
+what if something becomes blockage in queue? .. not being read
+kafka is msgqueue or stream or wal
+when to use stream and when to use msg queue
+what about comparision with batch processing
