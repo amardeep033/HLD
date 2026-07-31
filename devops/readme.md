@@ -276,6 +276,22 @@ Server
 └─ Database
 ```
 
+For plain Linux services, `systemd` is often enough.
+
+Instead of manually running:
+
+```bash
+java -jar app.jar
+```
+
+you configure a service:
+
+```text
+xyz.service
+```
+
+`systemd` then becomes responsible for starting, stopping, restarting, and keeping the application alive.
+
 Docker Compose is often enough.
 
 Many teams adopt Kubernetes too early.

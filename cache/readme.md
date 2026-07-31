@@ -134,7 +134,142 @@ Mitigation: compare-and-set, short TTLs, or the *delete-on-write* pattern with a
 
 ---
 
-## 7. Cache Stampede (Thundering Herd)
+## 7. Detecting External API Data Changes
+
+**Problem:** For external APIs, your service usually cannot invalidate cache on source writes because the write happens outside your system.
+
+Core question:
+
+> **"How stale is this data allowed to be?"**
+
+### 7.1 TTL-based Expiry
+
+Simplest and most common approach. Cache the API response with a fixed TTL.
+
+```
+Request → Redis HIT → return cached data
+        → Redis MISS → call external API → update Redis with TTL
+```
+
+Example:
+
+```
+Cache TTL = 30 min
+Maximum staleness ≈ 30 min
+```
+
+- **Pro:** Simple, cheap, reliable.
+- **Con:** If the API changes before TTL expiry, you won't know immediately.
+
+---
+
+### 7.2 Conditional Requests (ETag / Last-Modified)
+
+Use when the provider supports HTTP freshness validators.
+
+```
+First response:
+ETag: "abc123"
+```
+
+Store both data and metadata:
+
+```yaml
+key: weather:bangalore
+data: {...}
+etag: "abc123"
+```
+
+Revalidate later:
+
+```http
+GET /weather/bangalore
+If-None-Match: "abc123"
+```
+
+| Response | Meaning | Action |
+|---|---|---|
+| `304 Not Modified` | Data unchanged | Keep cached value |
+| `200 OK` + new `ETag` | Data changed | Update Redis |
+
+- **Pro:** Checks freshness without downloading the full response.
+- **Con:** Requires API support.
+
+---
+
+### 7.3 Background Refresh
+
+Refresh the cache before expiry so users rarely wait for the external API.
+
+```
+TTL = 30 min
+Refresh after = 25 min
+```
+
+```
+Request → Redis HIT → return data
+                  ↓
+          if nearing expiry
+                  ↓
+          refresh asynchronously
+```
+
+Useful for dashboards, feeds, recommendations, and API responses with moderate freshness needs.
+
+---
+
+### 7.4 Stale-While-Revalidate
+
+Serve stale data briefly while one request refreshes the cache in the background.
+
+```
+0 ───────────── 30m ───────────── 35m
+     FRESH          STALE
+```
+
+Example:
+
+```
+fresh TTL = 30 min
+stale TTL = 5 min
+```
+
+- During fresh window: return cached value.
+- During stale window: return old value immediately and trigger refresh.
+- After stale window: block and fetch fresh value.
+
+---
+
+### 7.5 Polling or Webhooks
+
+Use when freshness matters more than API-call cost.
+
+**Polling:**
+
+```
+Every 5 minutes → call external API → compare → update Redis if changed
+```
+
+**Webhook/event-based invalidation:**
+
+```
+External API data changed → webhook → your service → invalidate Redis
+```
+
+Webhook-based invalidation is closest to write-through freshness for third-party data, but only works if the provider supports events.
+
+### 7.6 Decision Guide
+
+| Freshness Need | Good Pattern |
+|---|---|
+| Low | TTL |
+| Medium | TTL + background refresh |
+| Medium-high | Conditional request with `ETag` / `Last-Modified` |
+| High | Polling or webhook/event invalidation |
+
+---
+
+## 8. Cache Stampede (Thundering Herd)
 
 **Problem:** A popular cache key expires. Dozens/hundreds of concurrent requests all miss and simultaneously hit the DB.
 
@@ -149,7 +284,7 @@ Mitigation: compare-and-set, short TTLs, or the *delete-on-write* pattern with a
 
 ---
 
-## 8. Hot Keys
+## 9. Hot Keys
 
 **Problem:** A small number of keys receive disproportionate traffic (e.g., a trending post, a celebrity profile). This overwhelms the specific cache node holding that key.
 
@@ -164,7 +299,7 @@ Mitigation: compare-and-set, short TTLs, or the *delete-on-write* pattern with a
 
 ---
 
-## 9. Cache Penetration
+## 10. Cache Penetration
 
 **Problem:** Requests for keys that **don't exist** in either cache or DB (e.g., invalid IDs). Every request is a miss → DB hit. Can be used as a DoS vector.
 
@@ -175,7 +310,7 @@ Mitigation: compare-and-set, short TTLs, or the *delete-on-write* pattern with a
 
 ---
 
-## 10. Cache Avalanche
+## 11. Cache Avalanche
 
 **Problem:** A large batch of cache keys expire at the same time → massive simultaneous DB load.
 
@@ -189,7 +324,7 @@ Mitigation: compare-and-set, short TTLs, or the *delete-on-write* pattern with a
 
 ---
 
-## 11. Quick Reference: Common Interview Scenarios
+## 12. Quick Reference: Common Interview Scenarios
 
 | Scenario | Recommended Pattern |
 |---|---|
@@ -292,7 +427,7 @@ Because each app instance has its own L1 cache, a write on instance A doesn't au
 
 ---
 
-## 12. Redis vs Memcached (Quick Comparison)
+## 15. Redis vs Memcached (Quick Comparison)
 
 | | Redis | Memcached |
 |---|---|---|

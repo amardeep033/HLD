@@ -1,0 +1,3 @@
+pub const URL_CACHE_TTL_SECONDS: u64 = 300;
+pub const RATE_LIMIT_SECONDS: i64 = 60;
+pub const RATE_LIMIT_MAX_REQUESTS: i64 = 5;
